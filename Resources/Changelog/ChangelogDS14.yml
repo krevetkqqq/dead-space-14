@@ -1815,3 +1815,14 @@ Entries:
   - type: Fix
     message: Оформление приказа Центрального Командования на изучение обелиска (режим
       "Осада отряда "Круг"").
+- id: 167
+  author: RIP6100
+  time: '2026-05-23T11:47:49.703026+00:00'
+  pr: 1470
+  changes:
+  - type: Add
+    message: В медицинский отдел вернулся вирусолог на карте Gemini
+  - type: Tweak
+    message: Станция Gemini была стандартизирована by Amaliz_ForTheMore.
+  - type: Fix
+    message: Баги на картах Gemini и Box
