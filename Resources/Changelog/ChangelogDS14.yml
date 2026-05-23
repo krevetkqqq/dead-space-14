@@ -1891,3 +1891,10 @@ Entries:
   changes:
   - type: Tweak
     message: КПБ теперь горят, но чуть слабее обычного.
+- id: 173
+  author: CyberBobeks
+  time: '2026-05-23T22:16:24.172724+00:00'
+  pr: 1478
+  changes:
+  - type: Tweak
+    message: Время спавна антагонистов в режим "выживание".
