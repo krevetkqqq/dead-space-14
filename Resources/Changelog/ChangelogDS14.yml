@@ -2001,3 +2001,10 @@ Entries:
   changes:
   - type: Add
     message: Встроенный пинпоинтер в КПК бойцов КСО.
+- id: 187
+  author: CyberBobeks
+  time: '2026-05-25T17:41:55.824363+00:00'
+  pr: 1491
+  changes:
+  - type: Tweak
+    message: Ядерная Боеголовка уничтожает всё сущее в радиусе взрыва.
