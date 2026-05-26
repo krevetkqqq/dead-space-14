@@ -2008,3 +2008,12 @@ Entries:
   changes:
   - type: Tweak
     message: Ядерная Боеголовка уничтожает всё сущее в радиусе взрыва.
+- id: 188
+  author: TheZuTi
+  time: '2026-05-26T16:47:45.310545+00:00'
+  pr: 1504
+  changes:
+  - type: Add
+    message: Ноуслипы и ночное зрение адскому отродью мага.
+  - type: Fix
+    message: Количество магов в выживание.
