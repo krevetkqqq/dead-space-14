@@ -2116,3 +2116,10 @@ Entries:
   - type: Fix
     message: Давний давний баг, где в снаряжении какой-либо роли можно было убрать
       КПК.
+- id: 202
+  author: CyberBobeks
+  time: '2026-05-27T13:31:31.139453+00:00'
+  pr: 1533
+  changes:
+  - type: Tweak
+    message: Дизайн манифеста.
