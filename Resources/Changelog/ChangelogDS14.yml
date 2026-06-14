@@ -3227,3 +3227,11 @@ Entries:
   - type: Tweak
     message: 'Теперь плодом кактуса можно наносить урон ![Screenshot_1](https://github.com/user-attachments/assets/f921ee26-6635-4382-ae11-5937d684ef18)
       ## Требования'
+- id: 319
+  author: IvanKupalda
+  time: '2026-06-14T16:22:31.078635+00:00'
+  pr: 1723
+  changes:
+  - type: Add
+    message: Паукам ужаса была добавлена возможность ходить на паутинных тайлах, даже
+      без гравитации
