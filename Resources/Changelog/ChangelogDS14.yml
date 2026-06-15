@@ -3304,3 +3304,10 @@ Entries:
   changes:
   - type: Tweak
     message: Пилот может не брать головной убор и выбрать между курткой и бронежилетом.
+- id: 327
+  author: HavvaMariajmiPalmer
+  time: '2026-06-15T12:21:20.807795+00:00'
+  pr: 1738
+  changes:
+  - type: Add
+    message: В лодаут офицера, исб, пилота добавлена голубая рубашечка.
