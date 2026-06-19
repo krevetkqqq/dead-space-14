@@ -69,11 +69,6 @@ public sealed partial class ShuttleSystem : SharedShuttleSystem
     private EntityQuery<PhysicsComponent> _physicsQuery;
     private EntityQuery<TransformComponent> _xformQuery;
 
-    private static readonly TimeSpan DockImpactGraceTime = TimeSpan.FromSeconds(2);
-
-    private readonly HashSet<(EntityUid, EntityUid)> _dockedGridPairs = new();
-    private readonly Dictionary<(EntityUid, EntityUid), TimeSpan> _dockImpactGrace = new();
-
     public override void Initialize()
     {
         base.Initialize();
@@ -93,8 +88,6 @@ public sealed partial class ShuttleSystem : SharedShuttleSystem
         SubscribeLocalEvent<ShuttleComponent, TileFrictionEvent>(OnTileFriction);
         SubscribeLocalEvent<ShuttleComponent, FTLStartedEvent>(OnFTLStarted);
         SubscribeLocalEvent<ShuttleComponent, FTLCompletedEvent>(OnFTLCompleted);
-        SubscribeLocalEvent<DockEvent>(OnDock);
-        SubscribeLocalEvent<UndockEvent>(OnUndock);
 
         SubscribeLocalEvent<GridInitializeEvent>(OnGridInit);
     }
@@ -174,42 +167,6 @@ public sealed partial class ShuttleSystem : SharedShuttleSystem
         _physics.SetBodyType(uid, BodyType.Static, manager: manager, body: component);
         _physics.SetBodyStatus(uid, component, BodyStatus.OnGround);
         _physics.SetFixedRotation(uid, true, manager: manager, body: component);
-    }
-
-    private void OnDock(DockEvent ev)
-    {
-        var key = GetGridPairKey(ev.GridAUid, ev.GridBUid);
-        _dockedGridPairs.Add(key);
-        _dockImpactGrace[key] = _gameTiming.CurTime + DockImpactGraceTime;
-    }
-
-    private void OnUndock(UndockEvent ev)
-    {
-        var key = GetGridPairKey(ev.GridAUid, ev.GridBUid);
-        _dockedGridPairs.Remove(key);
-        _dockImpactGrace.Remove(key);
-    }
-
-    private bool IsDockImpactSuppressed(EntityUid gridA, EntityUid gridB)
-    {
-        var key = GetGridPairKey(gridA, gridB);
-
-        if (_dockedGridPairs.Contains(key))
-            return true;
-
-        if (!_dockImpactGrace.TryGetValue(key, out var graceEnd))
-            return false;
-
-        if (_gameTiming.CurTime <= graceEnd)
-            return true;
-
-        _dockImpactGrace.Remove(key);
-        return false;
-    }
-
-    private static (EntityUid, EntityUid) GetGridPairKey(EntityUid gridA, EntityUid gridB)
-    {
-        return gridA.Id < gridB.Id ? (gridA, gridB) : (gridB, gridA);
     }
 
     private void OnShuttleShutdown(EntityUid uid, ShuttleComponent component, ComponentShutdown args)

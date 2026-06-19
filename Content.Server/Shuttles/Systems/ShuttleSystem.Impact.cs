@@ -120,9 +120,6 @@ public sealed partial class ShuttleSystem
         )
             return;
 
-        if (IsDockImpactSuppressed(args.OurEntity, args.OtherEntity))
-            return;
-
         var ourBody = args.OurBody;
         var otherBody = args.OtherBody;
 

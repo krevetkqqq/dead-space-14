@@ -94,7 +94,6 @@ public sealed class ArrivalsSystem : EntitySystem
         SubscribeLocalEvent<RoundStartingEvent>(OnRoundStarting);
         SubscribeLocalEvent<ArrivalsShuttleComponent, FTLStartedEvent>(OnArrivalsFTL);
         SubscribeLocalEvent<ArrivalsShuttleComponent, FTLCompletedEvent>(OnArrivalsDocked);
-        SubscribeLocalEvent<DockingComponent, UndockEvent>(OnDockUndocked);
 
         SubscribeLocalEvent<PlayerSpawnCompleteEvent>(SendDirections);
 
@@ -213,11 +212,7 @@ public sealed class ArrivalsSystem : EntitySystem
 
     private void OnArrivalsDocked(EntityUid uid, ArrivalsShuttleComponent component, ref FTLCompletedEvent args)
     {
-        var onHoldingMap = args.MapUid == component.HoldingMap;
-        SetShuttleDoorBolts(uid, onHoldingMap);
-
-        if (!onHoldingMap)
-            SetDockedDoorBoltLights(uid, false);
+        SetShuttleDoorBolts(uid, args.MapUid == component.HoldingMap);
 
         var dockTime = component.NextTransfer > _timing.CurTime
             ? component.NextTransfer - _timing.CurTime + TimeSpan.FromSeconds(_shuttles.DefaultStartupTime)
@@ -235,18 +230,6 @@ public sealed class ArrivalsSystem : EntitySystem
             };
             _deviceNetworkSystem.QueuePacket(uid, null, payload, netComp.TransmitFrequency);
         }
-    }
-
-    private void OnDockUndocked(EntityUid uid, DockingComponent component, ref UndockEvent args)
-    {
-        if (!HasComp<ArrivalsShuttleComponent>(args.GridAUid) &&
-            !HasComp<ArrivalsShuttleComponent>(args.GridBUid))
-        {
-            return;
-        }
-
-        if (TryComp<DoorBoltComponent>(uid, out var bolt))
-            _door.SetBoltLightsEnabled((uid, bolt), true);
     }
 
     public void HandlePlayerSpawning(PlayerSpawningEvent ev)
@@ -480,41 +463,11 @@ public sealed class ArrivalsSystem : EntitySystem
             if (xform.GridUid != shuttleUid)
                 continue;
 
-            if (bolted)
-            {
-                _door.SetBoltLightsEnabled((uid, bolt), true);
-
-                if (door.State != DoorState.Closed)
-                {
-                    if (door.State != DoorState.Closing)
-                        _door.TryClose(uid, door);
-
-                    continue;
-                }
-            }
+            if (bolted && door.State != DoorState.Closed)
+                _door.SetState(uid, DoorState.Closed, door);
 
             _door.SetBoltsDown((uid, bolt), bolted);
         }
-    }
-
-    private void SetDockedDoorBoltLights(EntityUid shuttleUid, bool enabled)
-    {
-        var query = AllEntityQuery<DockingComponent, TransformComponent>();
-
-        while (query.MoveNext(out var uid, out var dock, out var xform))
-        {
-            if (xform.GridUid != shuttleUid || dock.DockedWith == null)
-                continue;
-
-            SetDoorBoltLights(uid, enabled);
-            SetDoorBoltLights(dock.DockedWith.Value, enabled);
-        }
-    }
-
-    private void SetDoorBoltLights(EntityUid uid, bool enabled)
-    {
-        if (TryComp<DoorBoltComponent>(uid, out var bolt))
-            _door.SetBoltLightsEnabled((uid, bolt), enabled);
     }
 
     private bool TryGetArrivalsShuttle(EntityUid? gridUid, out Entity<ArrivalsShuttleComponent> shuttle)
