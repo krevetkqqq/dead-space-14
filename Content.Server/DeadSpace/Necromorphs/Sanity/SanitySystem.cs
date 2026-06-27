@@ -20,6 +20,8 @@ using Content.Shared.Jittering;
 using Content.Server.Speech.EntitySystems;
 using Robust.Shared.Player;
 using System.Linq;
+using Content.Shared.DeadSpace.Necromorphs.Unitology.Components;
+using Robust.Shared.Timing;
 
 namespace Content.Server.DeadSpace.Necromorphs.Sanity
 {
@@ -36,11 +38,12 @@ namespace Content.Server.DeadSpace.Necromorphs.Sanity
         [Dependency] private readonly SharedJitteringSystem _sharedJittering = default!;
         [Dependency] private readonly SlurredSystem _slurred = default!;
         [Dependency] private readonly ISharedPlayerManager _player = default!;
+        [Dependency] private readonly IGameTiming _time = default!;
 
         private const string HighSanityMessage = "Вы чувствуете головную боль";
         private const string MediumSanityMessage = "У вас болит голова, кости будто ломаются на части";
         private const string LowSanityMessage = "Вы теряете рассудок, вам совсем плохо!";
-        private const string LostSanityMessage = "Вы теряете сознание.";
+        private const string LostSanityMessage = "Вы теряете сознание. Власть над вашим телом вам не пренадлежит.";
 
         public static readonly ProtoId<StatusEffectPrototype> SlowedDownKey = "SlowedDown";
         public static readonly ProtoId<NpcFactionPrototype> SimpleHostileFaction = "SimpleHostile";
@@ -80,19 +83,19 @@ namespace Content.Server.DeadSpace.Necromorphs.Sanity
             switch (comp.SanityLevel)
             {
                 case float sanityLevel when sanityLevel > highSanityThreshold:
-                    _popup.PopupEntity(HighSanityMessage, uid, uid);
+                    // _popup.PopupEntity(HighSanityMessage, uid, uid);
                     HighSanity(uid, comp);
                     break;
                 case float sanityLevel when sanityLevel <= highSanityThreshold && sanityLevel > mediumSanityThreshold:
-                    _popup.PopupEntity(MediumSanityMessage, uid, uid);
+                    // _popup.PopupEntity(MediumSanityMessage, uid, uid);
                     MediumSanity(uid, comp);
                     break;
                 case float sanityLevel when sanityLevel <= mediumSanityThreshold && sanityLevel > lowSanityThreshold:
-                    _popup.PopupEntity(LowSanityMessage, uid, uid);
+                    // _popup.PopupEntity(LowSanityMessage, uid, uid);
                     LowSanity(uid, comp);
                     break;
                 case float sanityLevel when sanityLevel <= 0:
-                    _popup.PopupEntity(LostSanityMessage, uid, uid);
+                    // _popup.PopupEntity(LostSanityMessage, uid, uid);
                     break;
                 default:
                     break;
@@ -133,6 +136,13 @@ namespace Content.Server.DeadSpace.Necromorphs.Sanity
         {
             if (comp.IsCrazy)
                 return;
+
+            if (!HasComp<UnitologyEnslavedComponent>(uid))
+                _popup.PopupEntity(LostSanityMessage, uid, uid);
+
+            EnsureComp<UnitologyEnslavedComponent>(uid);
+
+            if (HasComp<UnitologyEnslavedComponent>(uid) && comp.NextCheckCrazyMob > _time.CurTime) return;
 
             if (TryComp<NpcFactionMemberComponent>(uid, out var factionComp))
                 comp.OldFaction = factionComp.Factions.FirstOrDefault();
@@ -206,6 +216,8 @@ namespace Content.Server.DeadSpace.Necromorphs.Sanity
 
             if (_player.TryGetSessionById(mind.UserId, out var session))
                 _chatMan.DispatchServerMessage(session, Loc.GetString("Вы можете вернуться в своё тело."));
+
+            // RemComp<UnitologyEnslavedComponent>(uid); // если нужно раскомментировать
 
             comp.IsCrazy = false;
         }

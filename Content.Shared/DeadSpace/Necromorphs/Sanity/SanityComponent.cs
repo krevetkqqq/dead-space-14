@@ -40,6 +40,8 @@ public sealed partial class SanityComponent : Component
 
     [ViewVariables]
     public string OldTask;
+    [ViewVariables]
+    public TimeSpan NextCheckCrazyMob = TimeSpan.Zero;
 }
 
 [ByRefEvent]
@@ -47,3 +49,4 @@ public readonly record struct SanityEvent();
 
 [ByRefEvent]
 public readonly record struct CheckCrazyMobEvent();
+

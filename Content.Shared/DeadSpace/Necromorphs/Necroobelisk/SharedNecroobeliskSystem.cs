@@ -3,6 +3,7 @@
 using Robust.Shared.Timing;
 using Content.Shared.DeadSpace.Necromorphs.Sanity;
 using Content.Shared.Mobs.Components;
+using System.Linq;
 
 namespace Content.Shared.DeadSpace.Necromorphs.Necroobelisk;
 
@@ -19,6 +20,7 @@ public abstract class SharedNecroobeliskSystem : EntitySystem
     public override void Initialize()
     {
         SubscribeLocalEvent<NecroobeliskComponent, EntityUnpausedEvent>(OnNecroobeliskUnpause);
+        SubscribeLocalEvent<NecroobeliskComponent, ComponentShutdown>(OnNecroobeliskStop);
     }
 
     private void OnNecroobeliskUnpause(EntityUid uid, NecroobeliskComponent component, ref EntityUnpausedEvent args)
@@ -27,12 +29,26 @@ public abstract class SharedNecroobeliskSystem : EntitySystem
         component.NextCheckTimeSanity += args.PausedTime;
         Dirty(uid, component);
     }
+    private void OnNecroobeliskStop(EntityUid uid, NecroobeliskComponent component, ref ComponentShutdown args)
+    {
+        if (component.MobsInRange == null) return;
+        foreach (var i in component.MobsInRange)
+        {
+            if (HasComp<SanityOverlayComponent>(i)) RemComp<SanityOverlayComponent>(i);
+        }
+    }
 
     private void SanityCheckOrConvergence(EntityUid uid, NecroobeliskComponent component)
     {
         var entities = _lookup.GetEntitiesInRange<MobStateComponent>(_transform.GetMapCoordinates(uid, Transform(uid)), component.RangeSanity);
-
-        foreach (var (entity, _) in entities)
+        foreach (var entity in component.MobsInRange)
+        {
+            if (!entities.Contains(entity))
+            {
+                if (HasComp<SanityOverlayComponent>(entity)) RemComp<SanityOverlayComponent>(entity);
+            }
+        }
+        foreach (var (entity, comp) in entities)
         {
             if (component.IsStageConvergence)
             {
@@ -51,9 +67,13 @@ public abstract class SharedNecroobeliskSystem : EntitySystem
 
             if (sanityComponent.SanityLevel <= 0)
             {
+                RemComp<SanityOverlayComponent>(entity);
                 var sanityLostEvent = new SanityLostEvent(entity);
                 RaiseLocalEvent(uid, ref sanityLostEvent);
+                return;
             }
+            EnsureComp<SanityOverlayComponent>(entity);
+            component.MobsInRange.Add((entity, comp));
         }
 
         if (component.MobsAbsorbed >= component.MobsForStageConvergence)
