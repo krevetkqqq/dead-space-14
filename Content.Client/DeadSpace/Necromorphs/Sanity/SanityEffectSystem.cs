@@ -14,6 +14,7 @@ public sealed class SanityEffectsSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly SharedCameraRecoilSystem _cameraRecoil = default!;
     [Dependency] private readonly IOverlayManager _overlayManager = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
 
     private SanityOverlay? _damageOverlay = default!;
     private const float EyeNudge = 0.04f;
@@ -31,15 +32,17 @@ public sealed class SanityEffectsSystem : EntitySystem
     {
         base.FrameUpdate(frameTime);
 
+        if (!_timing.IsFirstTimePredicted) return;
+
         var local = _player.LocalEntity;
-        if (local == null || !TryComp<SanityComponent>(local, out var c))
+        if (local == null || !TryComp<SanityComponent>(local, out var c) || !HasComp<SanityOverlayComponent>(local))
         {
             _eyeNudge = Vector2.Zero;
             return;
         }
         _cameraRecoil.KickCamera(local.Value,
             new Vector2(_random.NextFloat(-1f, 1f), _random.NextFloat(-1f, 1f)) * ((c.MaxSanityLevel - c.SanityLevel) / 100));
-        _damageOverlay!.Value = Math.Clamp((c.MaxSanityLevel - c.SanityLevel) / 10f, 0f, 10f);
+        _damageOverlay?.Value = Math.Clamp((c.MaxSanityLevel - c.SanityLevel) / 10f, 0f, 10f);
         var t = new Vector2(_random.NextFloat(-1f, 1f), _random.NextFloat(-1f, 1f)) * EyeNudge;
         _eyeNudge = Vector2.Lerp(_eyeNudge, t, 0.35f);
     }
