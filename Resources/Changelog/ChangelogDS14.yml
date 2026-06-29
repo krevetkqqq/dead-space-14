@@ -3953,3 +3953,10 @@ Entries:
   changes:
   - type: Add
     message: Новый планшет отрядов для ГСБ.
+- id: 394
+  author: Atickov
+  time: '2026-06-29T16:05:29.735800+00:00'
+  pr: 1856
+  changes:
+  - type: Fix
+    message: Осколок обелиска теперь не оглушает боргов
