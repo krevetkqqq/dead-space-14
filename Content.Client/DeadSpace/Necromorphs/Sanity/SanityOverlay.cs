@@ -13,13 +13,14 @@ public sealed class SanityOverlay : Overlay
     private readonly float _darknessAlphaOuter = 0.94f;
     public override OverlaySpace Space => OverlaySpace.WorldSpace;
     private readonly ShaderInstance _circleMaskShader = default!;
+    private const string ShaderName = "DeadSpaceGradientCircleMask";
 
     [Dependency] private IPrototypeManager _prototypeManager = default!;
 
     public SanityOverlay()
     {
         IoCManager.InjectDependencies(this);
-        _circleMaskShader = _prototypeManager.Index<ShaderPrototype>("DeadSpaceGradientCircleMask").InstanceUnique();
+        _circleMaskShader = _prototypeManager.Index<ShaderPrototype>(ShaderName).InstanceUnique();
     }
     protected override void Draw(in OverlayDrawArgs args)
     {
