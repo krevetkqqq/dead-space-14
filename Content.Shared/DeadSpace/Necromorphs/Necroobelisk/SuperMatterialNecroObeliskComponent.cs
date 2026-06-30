@@ -107,6 +107,7 @@ public sealed partial class SuperMatterialNecroObeliskComponent : Component
     public TimeSpan NextCheckPercents = TimeSpan.Zero;
     [DataField]
     public TimeSpan CheckTime = TimeSpan.FromSeconds(20);
+    public bool SanityCheckExecuted = false;
     public SuperMatterialNecroObeliskState StateEnum = SuperMatterialNecroObeliskState.Stop;
     public TimeSpan NextCheckNecroSpawn = TimeSpan.Zero;
     [DataField]

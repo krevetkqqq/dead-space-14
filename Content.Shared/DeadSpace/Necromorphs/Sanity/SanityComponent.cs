@@ -53,3 +53,4 @@ public readonly record struct SanityEvent();
 
 [ByRefEvent]
 public readonly record struct CheckCrazyMobEvent();
+

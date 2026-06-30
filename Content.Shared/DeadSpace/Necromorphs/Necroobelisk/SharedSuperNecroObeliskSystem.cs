@@ -4,6 +4,7 @@ using Robust.Shared.Timing;
 using Content.Shared.DeadSpace.Necromorphs.Sanity;
 using Content.Shared.Mobs.Components;
 using System.Linq;
+using Content.Shared.DeadSpace.Administration.GamePreset;
 
 namespace Content.Shared.DeadSpace.Necromorphs.Necroobelisk;
 
@@ -31,25 +32,21 @@ public abstract class SharedSuperNecroobeliskSystem : EntitySystem
     }
     private void OnNecroobeliskStop(EntityUid uid, SuperMatterialNecroObeliskComponent component, ref ComponentShutdown args)
     {
-        ClearTrackedOverlays(uid, component.MobsInRange);
+        if (component.MobsInRange == null) return;
+        foreach (var i in component.MobsInRange)
+        {
+            if (HasComp<SanityOverlayComponent>(i)) RemComp<SanityOverlayComponent>(i);
+        }
     }
 
     private void SanityCheckOrConvergence(EntityUid uid, SuperMatterialNecroObeliskComponent component)
     {
-        if (!component.IsActive)
-        {
-            ClearTrackedOverlays(uid, component.MobsInRange);
-            component.NextCheckTimeSanity = _gameTiming.CurTime + component.CheckDurationSanity;
-            return;
-        }
-
         var entities = _lookup.GetEntitiesInRange<MobStateComponent>(_transform.GetMapCoordinates(uid, Transform(uid)), component.RangeSanity);
-        foreach (var entity in component.MobsInRange.ToArray())
+        foreach (var entity in component.MobsInRange)
         {
             if (!entities.Contains(entity))
             {
-                TryRemoveSanityOverlay(uid, entity);
-                component.MobsInRange.Remove(entity);
+                if (HasComp<SanityOverlayComponent>(entity)) RemComp<SanityOverlayComponent>(entity);
             }
         }
         if (entities.Count > 8 && component.Percents > 20) component.Percents -= 10;
@@ -67,12 +64,12 @@ public abstract class SharedSuperNecroobeliskSystem : EntitySystem
             if (!TryComp<SanityComponent>(entity, out var sanityComponent))
                 continue;
 
-            _sharedSanity.TryAddSanityLvl(entity, -component.SanityDamage / entities.Count, sanityComponent);
+            if (component.IsActive)
+                _sharedSanity.TryAddSanityLvl(entity, -component.SanityDamage / entities.Count, sanityComponent);
 
             if (sanityComponent.SanityLevel <= 0)
             {
-                TryRemoveSanityOverlay(uid, entity);
-                component.MobsInRange.Remove((entity, comp));
+                RemComp<SanityOverlayComponent>(entity);
                 var sanityLostEvent = new SanityLostEvent(entity);
                 RaiseLocalEvent(uid, ref sanityLostEvent);
                 return;
@@ -112,70 +109,22 @@ public abstract class SharedSuperNecroobeliskSystem : EntitySystem
         var necroobeliskQuery = EntityQueryEnumerator<SuperMatterialNecroObeliskComponent>();
         while (necroobeliskQuery.MoveNext(out var ent, out var necroobelisk))
         {
+            if (necroobelisk.SanityCheckExecuted && _gameTiming.CurTime > necroobelisk.NextCheckTimeSanity)
+            {
+                necroobelisk.NextCheckTimeSanity = _gameTiming.CurTime + necroobelisk.CheckDurationSanity;
+            }
             if (_gameTiming.CurTime > necroobelisk.NextPulseTime)
             {
                 NecroobeliskPulse(ent, necroobelisk);
                 necroobelisk.NextPulseTime = _gameTiming.CurTime + necroobelisk.TimeUtilPulse;
             }
-
-            if (_gameTiming.CurTime > necroobelisk.NextCheckTimeSanity)
+            if (!necroobelisk.SanityCheckExecuted && _gameTiming.CurTime > necroobelisk.NextCheckTimeSanity)
+            {
                 SanityCheckOrConvergence(ent, necroobelisk);
+                necroobelisk.SanityCheckExecuted = true;
+            }
 
         }
-    }
-
-    private void ClearTrackedOverlays(EntityUid source, HashSet<Entity<MobStateComponent>> trackedMobs)
-    {
-        foreach (var entity in trackedMobs.ToArray())
-            TryRemoveSanityOverlay(source, entity);
-
-        trackedMobs.Clear();
-    }
-
-    private void TryRemoveSanityOverlay(EntityUid source, EntityUid entity)
-    {
-        if (IsInOtherActiveObeliskRange(source, entity))
-            return;
-
-        RemComp<SanityOverlayComponent>(entity);
-    }
-
-    private bool IsInOtherActiveObeliskRange(EntityUid source, EntityUid entity)
-    {
-        if (!TryComp<TransformComponent>(entity, out var entityXform))
-            return false;
-
-        var coords = _transform.GetMapCoordinates(entity, entityXform);
-
-        var necroobeliskQuery = EntityQueryEnumerator<NecroobeliskComponent, TransformComponent>();
-        while (necroobeliskQuery.MoveNext(out var obelisk, out var component, out var xform))
-        {
-            if (obelisk == source || !component.IsActive)
-                continue;
-
-            var obeliskCoords = _transform.GetMapCoordinates(obelisk, xform);
-            if (obeliskCoords.MapId != coords.MapId)
-                continue;
-
-            if ((obeliskCoords.Position - coords.Position).LengthSquared() <= component.RangeSanity * component.RangeSanity)
-                return true;
-        }
-
-        var superObeliskQuery = EntityQueryEnumerator<SuperMatterialNecroObeliskComponent, TransformComponent>();
-        while (superObeliskQuery.MoveNext(out var obelisk, out var component, out var xform))
-        {
-            if (obelisk == source || !component.IsActive)
-                continue;
-
-            var obeliskCoords = _transform.GetMapCoordinates(obelisk, xform);
-            if (obeliskCoords.MapId != coords.MapId)
-                continue;
-
-            if ((obeliskCoords.Position - coords.Position).LengthSquared() <= component.RangeSanity * component.RangeSanity)
-                return true;
-        }
-
-        return false;
     }
 
     public virtual void UpdateState(EntityUid uid, SuperMatterialNecroObeliskComponent component)

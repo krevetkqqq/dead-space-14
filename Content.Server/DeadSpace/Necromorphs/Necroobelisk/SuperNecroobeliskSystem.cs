@@ -86,11 +86,13 @@ public sealed class SuperNecroobeliskSystem : SharedSuperNecroobeliskSystem
             {
                 case int n when n is >= 0 and <= 25:
                     if (component.StateEnum != SuperMatterialNecroObeliskState.Stop) continue;
+                    component.SanityCheckExecuted = false;
                     EnsureComp<PowerSupplierComponent>(uid).MaxSupply = 10000;
                     component.StateEnum = SuperMatterialNecroObeliskState.Zero;
                     continue;
                 case int n when n > 25 && n <= 50:
                     if (component.StateEnum != SuperMatterialNecroObeliskState.Zero) continue;
+                    component.SanityCheckExecuted = true;
                     EnsureComp<PowerSupplierComponent>(uid).MaxSupply = 60000;
                     SetRangeSanity(component, 8f);
                     component.StateEnum = SuperMatterialNecroObeliskState.TwentyFive;
@@ -109,23 +111,17 @@ public sealed class SuperNecroobeliskSystem : SharedSuperNecroobeliskSystem
                         continue;
                     }
                     if (_gameTiming.CurTime > component.NextCheckNecroSpawn)
-                    {
                         for (var i = 0; i < 4; i++)
                             Spawn(component.NecroPrototype, Transform(uid).Coordinates.Offset(Vector2.Create(_random.NextFloat(-3, 3), _random.NextFloat(-3, 3))));
-                        component.NextCheckNecroSpawn = _gameTiming.CurTime + TimeSpan.FromSeconds(60);
-                    }
                     continue;
                 case 100:
                     if (!_gameTicker.AllPreviousGameRules.Any(x => x.Item2 == "SiegeOfTheCircle" || x.Item2 == "Unitology"))
                     {
                         component.Percents = 99;
+                        component.SanityCheckExecuted = false;
                         continue;
                     }
                     var coord = Transform(uid).Coordinates;
-                    component.SequenceStarted = false;
-                    component.StateEnum = SuperMatterialNecroObeliskState.Hundred;
-                    component.NextCheckPercents = TimeSpan.Zero;
-                    component.NextCheckNecroSpawn = TimeSpan.Zero;
                     _explosion.QueueExplosion(uid,
                         "Default",
                         1000000,
@@ -168,7 +164,7 @@ public sealed class SuperNecroobeliskSystem : SharedSuperNecroobeliskSystem
 
     private void OnConvergence(EntityUid uid, SuperMatterialNecroObeliskComponent component, NecroobeliskStartConvergenceEvent args)
     {
-        if (!component.IsCanStartConvergence || !component.IsActive)
+        if (!component.IsCanStartConvergence && !component.IsActive)
             return;
 
         var msg = new GameGlobalSoundEvent(component.SoundConvergence, AudioParams.Default);
