@@ -148,7 +148,7 @@ public abstract class SharedNecroobeliskSystem : EntitySystem
 
     private bool IsInOtherActiveObeliskRange(EntityUid source, EntityUid entity)
     {
-        if (!TryComp<TransformComponent>(entity, out var entityXform))
+        if (!TryComp(entity, out TransformComponent? entityXform))
             return false;
 
         var coords = _transform.GetMapCoordinates(entity, entityXform);
