@@ -4004,3 +4004,10 @@ Entries:
   changes:
   - type: Add
     message: Продажа энергии
+- id: 398
+  author: krevetkqqq
+  time: '2026-06-30T14:28:01.448326+00:00'
+  pr: 1848
+  changes:
+  - type: Add
+    message: Масштабная переработка юнитологов.
