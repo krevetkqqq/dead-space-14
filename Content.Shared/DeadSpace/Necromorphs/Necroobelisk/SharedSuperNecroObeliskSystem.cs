@@ -49,7 +49,7 @@ public abstract class SharedSuperNecroobeliskSystem : EntitySystem
                 if (HasComp<SanityOverlayComponent>(entity)) RemComp<SanityOverlayComponent>(entity);
             }
         }
-        if (entities.Count > 8) component.Percents -= 10;
+        if (entities.Count > 8 && component.Percents > 20) component.Percents -= 10;
         foreach (var (entity, comp) in entities)
         {
             if (component.IsStageConvergence)
