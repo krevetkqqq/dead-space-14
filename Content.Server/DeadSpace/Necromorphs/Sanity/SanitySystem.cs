@@ -65,6 +65,14 @@ namespace Content.Server.DeadSpace.Necromorphs.Sanity
             var query = EntityQueryEnumerator<SanityComponent>();
             while (query.MoveNext(out var uid, out var comp))
             {
+                if (comp.NextCheckCrazyMob != TimeSpan.Zero && comp.NextCheckCrazyMob <= _time.CurTime)
+                {
+                    if (comp.SanityLevel <= 0)
+                        Crazy(uid, comp);
+                    else
+                        comp.NextCheckCrazyMob = TimeSpan.Zero;
+                }
+
                 if (comp.NextCheckPopup == TimeSpan.Zero)
                     comp.NextCheckPopup = _time.CurTime + TimeSpan.FromSeconds(10);
 
@@ -145,6 +153,7 @@ namespace Content.Server.DeadSpace.Necromorphs.Sanity
             }
             else
             {
+                comp.NextCheckCrazyMob = TimeSpan.Zero;
                 UnCrazy(uid, comp);
             }
         }
@@ -154,15 +163,18 @@ namespace Content.Server.DeadSpace.Necromorphs.Sanity
             if (comp.IsCrazy)
                 return;
 
-            if (!HasComp<UnitologyEnslavedComponent>(uid))
+            if (comp.NextCheckCrazyMob == TimeSpan.Zero)
             {
                 _popup.PopupEntity(LostSanityMessage, uid, uid);
-                EnsureComp<UnitologyEnslavedComponent>(uid);
                 comp.NextCheckCrazyMob = _time.CurTime + TimeSpan.FromSeconds(30);
                 return;
             }
 
-            if (HasComp<UnitologyEnslavedComponent>(uid) && comp.NextCheckCrazyMob > _time.CurTime) return;
+            if (comp.NextCheckCrazyMob > _time.CurTime)
+                return;
+
+            EnsureComp<UnitologyEnslavedComponent>(uid);
+            comp.NextCheckCrazyMob = TimeSpan.Zero;
 
             if (TryComp<NpcFactionMemberComponent>(uid, out var factionComp))
                 comp.OldFaction = factionComp.Factions.FirstOrDefault();
