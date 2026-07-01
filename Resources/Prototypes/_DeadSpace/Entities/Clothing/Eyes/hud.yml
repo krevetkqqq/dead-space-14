@@ -149,7 +149,7 @@
 - type: entity
   parent: ClothingEyesHudAdvanced
   id: ClothingEyesHudCaptain
-  name: золотые очки капитана 
+  name: золотые очки капитана
   description: Превосходные золотые очки, производимые для капитанов. Их ношение добавляет +15 к стилю.
   components:
   - type: Sprite
