@@ -1,0 +1,10 @@
+- type: entity
+  name: IPCOverload
+  description: IPCOverload
+  id: IPCOverload
+  parent: BaseItem
+  components:
+    - type: Sprite
+      sprite: deprecated.rsi
+      state: deprecated
+    - type: IPCOverload
